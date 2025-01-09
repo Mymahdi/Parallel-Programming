@@ -42,6 +42,7 @@ __global__ void sobelFilter(const unsigned char* input, unsigned char* output, i
 }
 
 
+
 __constant__ float sobelX[3][3] = {
     {-1, 0, 1},
     {-2, 0, 2},
@@ -74,6 +75,14 @@ int main() {
     cudaMalloc(&d_output, imgSize);
     cudaMemcpy(d_input, h_input, imgSize, cudaMemcpyHostToDevice);
 
+    dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 gridDim((width + BLOCK_SIZE - 1) / BLOCK_SIZE, (height + BLOCK_SIZE - 1) / BLOCK_SIZE);
+
+    sobelFilter<<<gridDim, blockDim>>>(d_input, d_output, width, height);
+    cudaDeviceSynchronize();
+    cudaMemcpy(h_output, d_output, imgSize, cudaMemcpyDeviceToHost);
+
     std::cout << "Image loaded successfully!" << std::endl;
     return 0;
 }
+

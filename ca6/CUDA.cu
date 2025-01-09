@@ -82,6 +82,12 @@ int main() {
     cudaDeviceSynchronize();
     cudaMemcpy(h_output, d_output, imgSize, cudaMemcpyDeviceToHost);
 
+    cv::Mat outputImage(height, width, CV_8UC1, h_output);
+    cv::imwrite("output.jpg", outputImage);
+    cudaFree(d_input);
+    cudaFree(d_output);
+    free(h_output);
+
     std::cout << "Image loaded successfully!" << std::endl;
     return 0;
 }

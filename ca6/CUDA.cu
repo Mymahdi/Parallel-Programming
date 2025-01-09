@@ -4,6 +4,44 @@
 #include <opencv2/opencv.hpp>
 
 
+__global__ void sobelFilter(const unsigned char* input, unsigned char* output, int width, int height) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    __shared__ unsigned char sharedMem[BLOCK_SIZE + 2][BLOCK_SIZE + 2];
+
+    // Load input to shared memory
+    if (x < width && y < height) {
+        sharedMem[threadIdx.y + 1][threadIdx.x + 1] = input[y * width + x];
+        if (threadIdx.x == 0 && x > 0) // Left halo
+            sharedMem[threadIdx.y + 1][0] = input[y * width + x - 1];
+        if (threadIdx.x == blockDim.x - 1 && x < width - 1) // Right halo
+            sharedMem[threadIdx.y + 1][BLOCK_SIZE + 1] = input[y * width + x + 1];
+        if (threadIdx.y == 0 && y > 0) // Top halo
+            sharedMem[0][threadIdx.x + 1] = input[(y - 1) * width + x];
+        if (threadIdx.y == blockDim.y - 1 && y < height - 1) // Bottom halo
+            sharedMem[BLOCK_SIZE + 1][threadIdx.x + 1] = input[(y + 1) * width + x];
+    }
+    __syncthreads();
+
+    if (x < width && y < height) {
+        float gradX = 0.0f;
+        float gradY = 0.0f;
+
+        #pragma unroll
+        for (int ky = -1; ky <= 1; ++ky) {
+            #pragma unroll
+            for (int kx = -1; kx <= 1; ++kx) {
+                gradX += sobelX[ky + 1][kx + 1] * sharedMem[threadIdx.y + 1 + ky][threadIdx.x + 1 + kx];
+                gradY += sobelY[ky + 1][kx + 1] * sharedMem[threadIdx.y + 1 + ky][threadIdx.x + 1 + kx];
+            }
+        }
+
+        output[y * width + x] = min(255, (int)sqrtf(gradX * gradX + gradY * gradY));
+    }
+}
+
+
 __constant__ float sobelX[3][3] = {
     {-1, 0, 1},
     {-2, 0, 2},

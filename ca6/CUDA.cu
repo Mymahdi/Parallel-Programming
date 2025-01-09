@@ -4,6 +4,18 @@
 #include <opencv2/opencv.hpp>
 
 
+__constant__ float sobelX[3][3] = {
+    {-1, 0, 1},
+    {-2, 0, 2},
+    {-1, 0, 1}
+};
+
+__constant__ float sobelY[3][3] = {
+    {-1, -2, -1},
+    { 0,  0,  0},
+    { 1,  2,  1}
+};
+
 
 int main() {
     cv::Mat image = cv::imread("images/Lenna.png", cv::IMREAD_GRAYSCALE);

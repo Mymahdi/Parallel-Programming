@@ -62,9 +62,13 @@ int main() {
     toGreyScale(input, grayImage, height, width, channels);
 
     prewitt(grayImage, outputImage, height, width);
-    
+
     cv::Mat result(height, width, CV_8UC1, outputImage);
     cv::imwrite("output.jpg", result);
+
+    free(grayImage);
+    free(outputImage);
+    printf("Edge-detected image saved as output.jpg\n");
 
     return 0;
 }

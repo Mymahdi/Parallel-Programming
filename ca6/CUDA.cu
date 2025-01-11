@@ -60,6 +60,8 @@ int main() {
     byte *outputImage = (byte *)malloc(width * height * sizeof(byte));
 
     toGreyScale(input, grayImage, height, width, channels);
+
+    prewitt(grayImage, outputImage, height, width);
     
     return 0;
 }

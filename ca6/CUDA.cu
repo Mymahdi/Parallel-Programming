@@ -59,6 +59,8 @@ int main() {
     byte *grayImage = (byte *)malloc(width * height * sizeof(byte));
     byte *outputImage = (byte *)malloc(width * height * sizeof(byte));
 
+    toGreyScale(input, grayImage, height, width, channels);
+    
     return 0;
 }
 

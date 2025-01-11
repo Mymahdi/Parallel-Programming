@@ -1,5 +1,10 @@
 #include <math.h>
 #include <stdlib.h>
+#include <stdlib.h>
+#include <float.h>
+#include <opencv2/opencv.hpp>
+
+
 typedef unsigned char byte;
 
 void toGreyScale(byte *input, byte *output, int h, int w, int ch) {
@@ -35,3 +40,27 @@ void prewitt(byte *input, byte *output, int h, int w) {
         }
     }
 }
+
+
+int main() {
+
+    // Load sample image
+    cv::Mat inputImage = cv::imread("images/flower.png", cv::IMREAD_COLOR);
+    if (inputImage.empty()) {
+        printf("Failed to load image!\n");
+        return -1;
+    }
+
+    int width = inputImage.cols;
+    int height = inputImage.rows;
+    int channels = inputImage.channels();
+
+    byte *input = inputImage.data;
+    byte *grayImage = (byte *)malloc(width * height * sizeof(byte));
+    byte *outputImage = (byte *)malloc(width * height * sizeof(byte));
+
+    return 0;
+}
+
+
+

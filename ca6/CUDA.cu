@@ -63,6 +63,9 @@ int main() {
 
     prewitt(grayImage, outputImage, height, width);
     
+    cv::Mat result(height, width, CV_8UC1, outputImage);
+    cv::imwrite("output.jpg", result);
+
     return 0;
 }
 

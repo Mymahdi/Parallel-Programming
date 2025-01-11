@@ -12,3 +12,26 @@ void toGreyScale(byte *input, byte *output, int h, int w, int ch) {
         }
     }
 }
+
+
+void prewitt(byte *input, byte *output, int h, int w) {
+    int x, y;
+    byte *img = input;
+    for (y = 1; y < h - 1; y++) {
+        for (x = 1; x < w - 1; x++) {
+            int vKer = 0, hKer = 0;
+
+            vKer = img[(y-1)*w+(x-1)] * -1 + img[(y-1)*w+x] * -1 + img[(y-1)*w+(x+1)] * -1 +
+                   img[(y+1)*w+(x-1)] *  1 + img[(y+1)*w+x] *  1 + img[(y+1)*w+(x+1)] *  1;
+
+            hKer = img[(y-1)*w+(x-1)] * -1 + img[(y-1)*w+(x+1)] *  1 +
+                   img[y*w+(x-1)] * -1 + img[y*w+(x+1)] *  1 +
+                   img[(y+1)*w+(x-1)] * -1 + img[(y+1)*w+(x+1)] *  1;
+
+            int gradient = (int)sqrt(hKer * hKer + vKer * vKer);
+            gradient = gradient > 255 ? 255 : gradient;
+
+            output[y * w + x] = (byte)gradient;
+        }
+    }
+}

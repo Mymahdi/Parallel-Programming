@@ -1,9 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
-#include <stdlib.h>
-#include <float.h>
 #include <opencv2/opencv.hpp>
-
 
 typedef unsigned char byte;
 
@@ -18,29 +15,46 @@ void toGreyScale(byte *input, byte *output, int h, int w, int ch) {
     }
 }
 
-
-void prewitt(byte *input, byte *output, int h, int w) {
+// Apply the Sobel edge detection kernel
+void applySobel(byte *input, byte *output, int h, int w) {
     int x, y;
     byte *img = input;
+    
+    // Sobel kernel for detecting edges in horizontal and vertical directions
+    int kernel_x[3][3] = {
+        {-1,  0,  1},
+        {-2,  0,  2},
+        {-1,  0,  1}
+    };
+
+    int kernel_y[3][3] = {
+        {-1, -2, -1},
+        { 0,  0,  0},
+        { 1,  2,  1}
+    };
+
     for (y = 1; y < h - 1; y++) {
         for (x = 1; x < w - 1; x++) {
-            int vKer = 0, hKer = 0;
+            int gx = 0, gy = 0;
 
-            vKer = img[(y-1)*w+(x-1)] * -1 + img[(y-1)*w+x] * -1 + img[(y-1)*w+(x+1)] * -1 +
-                   img[(y+1)*w+(x-1)] *  1 + img[(y+1)*w+x] *  1 + img[(y+1)*w+(x+1)] *  1;
+            // Apply the Sobel kernels
+            for (int ky = -1; ky <= 1; ky++) {
+                for (int kx = -1; kx <= 1; kx++) {
+                    int pixel = img[(y + ky) * w + (x + kx)];
+                    gx += kernel_x[ky + 1][kx + 1] * pixel;
+                    gy += kernel_y[ky + 1][kx + 1] * pixel;
+                }
+            }
 
-            hKer = img[(y-1)*w+(x-1)] * -1 + img[(y-1)*w+(x+1)] *  1 +
-                   img[y*w+(x-1)] * -1 + img[y*w+(x+1)] *  1 +
-                   img[(y+1)*w+(x-1)] * -1 + img[(y+1)*w+(x+1)] *  1;
+            // Calculate the gradient magnitude
+            int gradient = (int)sqrt(gx * gx + gy * gy);
+            gradient = gradient > 255 ? 255 : (gradient < 0 ? 0 : gradient);
 
-            int gradient = (int)sqrt(hKer * hKer + vKer * vKer);
-            gradient = gradient > 255 ? 255 : gradient;
-
+            // Store the result
             output[y * w + x] = (byte)gradient;
         }
     }
 }
-
 
 int main() {
 
@@ -59,19 +73,29 @@ int main() {
     byte *grayImage = (byte *)malloc(width * height * sizeof(byte));
     byte *outputImage = (byte *)malloc(width * height * sizeof(byte));
 
+    // Convert to grayscale
     toGreyScale(input, grayImage, height, width, channels);
 
-    prewitt(grayImage, outputImage, height, width);
+    // Apply Sobel edge detection
+    applySobel(grayImage, outputImage, height, width);
 
+    // Convert the result back to a Mat object for visualization
     cv::Mat result(height, width, CV_8UC1, outputImage);
-    cv::imwrite("output.jpg", result);
+
+    // Normalize the result to enhance the edges
+    cv::Mat enhancedResult;
+    cv::normalize(result, enhancedResult, 0, 255, cv::NORM_MINMAX);
+
+    // Save the result as an image
+    cv::imwrite("output_sobel.jpg", enhancedResult);
+
+    // Display the result
+    cv::imshow("Edge Detection Result", enhancedResult);
+    cv::waitKey(0);
 
     free(grayImage);
     free(outputImage);
-    printf("Edge-detected image saved as output.jpg\n");
+    printf("Edge-detected image saved as output_sobel.jpg\n");
 
     return 0;
 }
-
-
-

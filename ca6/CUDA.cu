@@ -50,6 +50,18 @@ int main() {
 
     cv::Mat padded_image;
     cv::copyMakeBorder(image_float, padded_image, 1, 1, 1, 1, cv::BORDER_REPLICATE);
+
+    int padded_height = padded_image.rows;
+    int padded_width = padded_image.cols;
+
+    cv::Mat output_image(image_height, image_width, CV_32FC3);
+
+    float* d_input, * d_output;
+    cudaMalloc((void**)&d_input, padded_height * padded_width * channels * sizeof(float));
+    cudaMalloc((void**)&d_output, image_height * image_width * channels * sizeof(float));
+
+    cudaMemcpy(d_input, padded_image.ptr<float>(), padded_height * padded_width * channels * sizeof(float), cudaMemcpyHostToDevice);
+
     
     return 0;
 }

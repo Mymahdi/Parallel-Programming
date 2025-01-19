@@ -32,7 +32,6 @@ __global__ void applyKernel(const float* input, float* output, int padded_height
     }
 }
 
-
 int main() {
     std::string image_path = "images/flower.png";
     cv::Mat image = cv::imread(image_path, cv::IMREAD_COLOR);
@@ -100,6 +99,18 @@ int main() {
     cudaFree(d_input);
     cudaFree(d_output);
 
-    
+    float sequential_time = 10000.0f;
+    float speedup = sequential_time / milliseconds;
+
+    int num_threads = grid_size.x * grid_size.y * block_size.x * block_size.y;
+
+    float efficiency = speedup / num_threads;
+
+    std::cout << "Speedup: " << speedup << std::endl;
+    std::cout << "Efficiency: " << efficiency << std::endl;
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
     return 0;
 }
+

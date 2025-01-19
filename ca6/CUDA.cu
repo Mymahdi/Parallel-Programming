@@ -31,3 +31,25 @@ __global__ void applyKernel(const float* input, float* output, int padded_height
         output[(y * image_width + x) * channels + c] = value;
     }
 }
+
+
+int main() {
+    std::string image_path = "images/flower.png";
+    cv::Mat image = cv::imread(image_path, cv::IMREAD_COLOR);
+    if (image.empty()) {
+        std::cerr << "Error: Could not load image!" << std::endl;
+        return -1;
+    }
+
+    cv::Mat image_float;
+    image.convertTo(image_float, CV_32FC3, 1.0 / 255.0);
+
+    int image_height = image_float.rows;
+    int image_width = image_float.cols;
+    int channels = image_float.channels();
+
+    cv::Mat padded_image;
+    cv::copyMakeBorder(image_float, padded_image, 1, 1, 1, 1, cv::BORDER_REPLICATE);
+    
+    return 0;
+}

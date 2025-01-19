@@ -91,6 +91,15 @@ int main() {
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "CUDA Kernel Execution Time: " << milliseconds << " ms" << std::endl;
 
+    cudaMemcpy(output_image.ptr<float>(), d_output, image_height * image_width * channels * sizeof(float), cudaMemcpyDeviceToHost);
+
+    cv::Mat output_image_8bit;
+    output_image.convertTo(output_image_8bit, CV_8UC3, 255.0);
+    cv::imwrite("output.jpg", output_image_8bit);
+
+    cudaFree(d_input);
+    cudaFree(d_output);
+
     
     return 0;
 }

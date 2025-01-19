@@ -1,101 +1,33 @@
-#include <math.h>
-#include <stdlib.h>
-#include <opencv2/opencv.hpp>
+#define BLOCK_SIZE 16
 
-typedef unsigned char byte;
+__global__ void applyKernel(const float* input, float* output, int padded_height, int padded_width, int channels) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-void toGreyScale(byte *input, byte *output, int h, int w, int ch) {
-    int i, j;
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < w; j++) {
-            int ind = i * w * ch + j * ch;
-            byte res = input[ind + 0] * 0.2989 + input[ind + 1] * 0.5870 + input[ind + 2] * 0.1140;
-            output[i * w + j] = res;
-        }
-    }
-}
+    int image_height = padded_height - 2;
+    int image_width = padded_width - 2;
 
-// Apply the Sobel edge detection kernel
-void applySobel(byte *input, byte *output, int h, int w) {
-    int x, y;
-    byte *img = input;
-    
-    // Sobel kernel for detecting edges in horizontal and vertical directions
-    int kernel_x[3][3] = {
-        {-1,  0,  1},
-        {-2,  0,  2},
-        {-1,  0,  1}
+    if (x >= image_width || y >= image_height) return;
+
+    float kernel[9] = {
+         0,  1,  0,
+         1, -2,  1,
+         0,  1,  0
     };
 
-    int kernel_y[3][3] = {
-        {-1, -2, -1},
-        { 0,  0,  0},
-        { 1,  2,  1}
-    };
+    for (int c = 0; c < channels; ++c) {
+        float value = 0.0f;
 
-    for (y = 1; y < h - 1; y++) {
-        for (x = 1; x < w - 1; x++) {
-            int gx = 0, gy = 0;
+        value += input[((y + 0) * padded_width + (x + 0)) * channels + c] * kernel[0];
+        value += input[((y + 0) * padded_width + (x + 1)) * channels + c] * kernel[1];
+        value += input[((y + 0) * padded_width + (x + 2)) * channels + c] * kernel[2];
+        value += input[((y + 1) * padded_width + (x + 0)) * channels + c] * kernel[3];
+        value += input[((y + 1) * padded_width + (x + 1)) * channels + c] * kernel[4];
+        value += input[((y + 1) * padded_width + (x + 2)) * channels + c] * kernel[5];
+        value += input[((y + 2) * padded_width + (x + 0)) * channels + c] * kernel[6];
+        value += input[((y + 2) * padded_width + (x + 1)) * channels + c] * kernel[7];
+        value += input[((y + 2) * padded_width + (x + 2)) * channels + c] * kernel[8];
 
-            // Apply the Sobel kernels
-            for (int ky = -1; ky <= 1; ky++) {
-                for (int kx = -1; kx <= 1; kx++) {
-                    int pixel = img[(y + ky) * w + (x + kx)];
-                    gx += kernel_x[ky + 1][kx + 1] * pixel;
-                    gy += kernel_y[ky + 1][kx + 1] * pixel;
-                }
-            }
-
-            // Calculate the gradient magnitude
-            int gradient = (int)sqrt(gx * gx + gy * gy);
-            gradient = gradient > 255 ? 255 : (gradient < 0 ? 0 : gradient);
-
-            // Store the result
-            output[y * w + x] = (byte)gradient;
-        }
+        output[(y * image_width + x) * channels + c] = value;
     }
-}
-
-int main() {
-
-    // Load sample image
-    cv::Mat inputImage = cv::imread("images/flower.png", cv::IMREAD_COLOR);
-    if (inputImage.empty()) {
-        printf("Failed to load image!\n");
-        return -1;
-    }
-
-    int width = inputImage.cols;
-    int height = inputImage.rows;
-    int channels = inputImage.channels();
-
-    byte *input = inputImage.data;
-    byte *grayImage = (byte *)malloc(width * height * sizeof(byte));
-    byte *outputImage = (byte *)malloc(width * height * sizeof(byte));
-
-    // Convert to grayscale
-    toGreyScale(input, grayImage, height, width, channels);
-
-    // Apply Sobel edge detection
-    applySobel(grayImage, outputImage, height, width);
-
-    // Convert the result back to a Mat object for visualization
-    cv::Mat result(height, width, CV_8UC1, outputImage);
-
-    // Normalize the result to enhance the edges
-    cv::Mat enhancedResult;
-    cv::normalize(result, enhancedResult, 0, 255, cv::NORM_MINMAX);
-
-    // Save the result as an image
-    cv::imwrite("output_sobel.jpg", enhancedResult);
-
-    // Display the result
-    cv::imshow("Edge Detection Result", enhancedResult);
-    cv::waitKey(0);
-
-    free(grayImage);
-    free(outputImage);
-    printf("Edge-detected image saved as output_sobel.jpg\n");
-
-    return 0;
 }

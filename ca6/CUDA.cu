@@ -62,6 +62,35 @@ int main() {
 
     cudaMemcpy(d_input, padded_image.ptr<float>(), padded_height * padded_width * channels * sizeof(float), cudaMemcpyHostToDevice);
 
+    dim3 block_size(BLOCK_SIZE, BLOCK_SIZE, 1);
+    dim3 grid_size(
+        (image_width + block_size.x - 1) / block_size.x,
+        (image_height + block_size.y - 1) / block_size.y
+    );
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaEventRecord(start);
+
+    applyKernel<<<grid_size, block_size>>>(d_input, d_output, padded_height, padded_width, channels);
+
+    cudaDeviceSynchronize();
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+        return -1;
+    }
+
+    cudaEventRecord(stop);
+
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "CUDA Kernel Execution Time: " << milliseconds << " ms" << std::endl;
+
     
     return 0;
 }

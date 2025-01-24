@@ -103,3 +103,23 @@ void customer(const string& name, int orderSize) {
     receiveTimes.push_back(chrono::duration_cast<chrono::milliseconds>(endReceiveTime - startReceiveTime).count());
     cout << "Customer " << name << " has received all breads and is leaving.\n";
 }
+
+void getInput() {
+    string customerNames;
+    getline(cin, customerNames);
+    string orderSizes;
+    getline(cin, orderSizes);
+
+    stringstream nameStream(customerNames);
+    stringstream sizeStream(orderSizes);
+
+    string name;
+    int orderSize;
+
+    while (getline(nameStream, name, ' ') && sizeStream >> orderSize) {
+        if (!name.empty()) {
+            lock_guard<mutex> lock(queueMutex);
+            customerQueue.push_back({name, orderSize});
+        }
+    }
+}

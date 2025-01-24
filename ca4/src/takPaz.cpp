@@ -144,3 +144,31 @@ void calculateAndPrintMetrics() {
     cout << "Average bread receiving time: " << avgReceive << " ms\n";
     cout << "Standard deviation of bread receiving time: " << sdReceive << " ms\n";
 }
+
+int main() {
+    vector<thread> customerThreads;
+    getInput();
+
+    for (int i = 0; i < customerQueue.size(); i++) {
+        auto [name, orderSize] = customerQueue[i];
+        customerThreads.emplace_back(customer, name, orderSize);
+    }
+
+    thread bakerThread(baker);
+    thread ovenThread(oven);
+
+    for (auto& t : customerThreads) {
+        t.join();
+    }
+
+    bakeryOpen = false;
+    cvBaker.notify_all();
+    cvOven.notify_all();
+    bakerThread.join();
+    ovenThread.join();
+
+    calculateAndPrintMetrics();
+
+    return 0;
+}
+

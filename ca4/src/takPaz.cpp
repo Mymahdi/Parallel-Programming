@@ -28,3 +28,15 @@ bool ovenReady = true;
 
 vector<int> orderTimes;
 vector<int> receiveTimes;
+
+
+void oven() {
+    while (bakeryOpen) {
+        unique_lock<mutex> lock(sharedSpaceMutex);
+        cvOven.wait(lock, [] { return !ovenReady || !bakeryOpen; });
+        if (!bakeryOpen) break;
+        this_thread::sleep_for(chrono::milliseconds(BAKING_TIME));
+        ovenReady = true;
+        cvBaker.notify_one();
+    }
+}

@@ -95,3 +95,29 @@ void baker(int id) {
         queueRe2Lock.unlock();
     }
 }
+
+void customer(const string &name, int orderSize, int bakerId) {
+    auto startReceiveTime = chrono::steady_clock::now();
+
+    while (orderSize > 0) {
+        unique_lock<mutex> lock(sharedSpaceMutex);
+        cvCustomer.wait(lock, [&name] { return sharedSpace[name] > 0; });
+
+        int pickedUp = min(orderSize, sharedSpace[name]);
+        orderSize -= pickedUp;
+        sharedSpace[name] -= pickedUp;
+        cout << "Customer " << name << " picked up " << pickedUp << " breads. Remaining order: " << orderSize << "\n";
+
+        if (orderSize == 0) {
+            sharedSpace.erase(name);
+        }
+        cvBakers[bakerId]->notify_one();
+    }
+
+    auto endReceiveTime = chrono::steady_clock::now();
+    unique_lock<mutex> customerLock(customerMutex);
+    receiveTimes.push_back(chrono::duration_cast<chrono::milliseconds>(endReceiveTime - startReceiveTime).count());
+    cout << "Customer " << name << " has received all breads and is leaving.\n";
+    customerLock.unlock();
+}
+

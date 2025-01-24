@@ -123,3 +123,24 @@ void getInput() {
         }
     }
 }
+
+void calculateAndPrintMetrics() {
+    double avgOrder = 0.0, avgReceive = 0.0;
+    for (auto time : orderTimes) avgOrder += time;
+    for (auto time : receiveTimes) avgReceive += time;
+
+    avgOrder /= orderTimes.size();
+    avgReceive /= receiveTimes.size();
+
+    double sdOrder = 0.0, sdReceive = 0.0;
+    for (auto time : orderTimes) sdOrder += pow(time - avgOrder, 2);
+    for (auto time : receiveTimes) sdReceive += pow(time - avgReceive, 2);
+
+    sdOrder = sqrt(sdOrder / orderTimes.size());
+    sdReceive = sqrt(sdReceive / receiveTimes.size());
+
+    cout << "Average order processing time: " << avgOrder << " ms\n";
+    cout << "Standard deviation of order processing time: " << sdOrder << " ms\n";
+    cout << "Average bread receiving time: " << avgReceive << " ms\n";
+    cout << "Standard deviation of bread receiving time: " << sdReceive << " ms\n";
+}

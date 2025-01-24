@@ -121,3 +121,51 @@ void customer(const string &name, int orderSize, int bakerId) {
     customerLock.unlock();
 }
 
+int main() {
+    int numBakers;
+    cin >> numBakers;
+
+    OVEN_CAPACITY = 10 * numBakers;
+
+    bakerQueues.resize(numBakers);
+    queueMutexes.resize(numBakers);
+    cvBakers.resize(numBakers);
+    for (int i = 0; i < numBakers; ++i) {
+        queueMutexes[i] = make_unique<mutex>();
+        cvBakers[i] = make_unique<condition_variable>();
+    }
+
+    vector<thread> customerThreads;
+    vector<thread> bakerThreads;
+
+    getInput(numBakers);
+
+    for (int i = 0; i < numBakers; ++i) {
+        for (int j = 0; j < bakerQueues[i].size(); j++) {
+            auto [name, orderSize] = bakerQueues[i][j];
+            customerThreads.emplace_back(customer, name, orderSize, i);
+        }
+    }
+
+    for (int i = 0; i < numBakers; ++i) {
+        bakerThreads.emplace_back(baker, i);
+    }
+
+    for (auto &t : customerThreads) {
+        if (t.joinable()) t.join();
+    }
+
+    bakeryOpen = false;
+    for (auto &cv : cvBakers) {
+        cv->notify_all();
+    }
+    for (auto &t : bakerThreads) {
+        if (t.joinable()) t.join();
+    }
+
+    calculateAndPrintMetrics();
+    cout << "Bakery is now closed.\n";
+    return 0;
+}
+
+

@@ -121,6 +121,28 @@ void customer(const string &name, int orderSize, int bakerId) {
     customerLock.unlock();
 }
 
+void calculateAndPrintMetrics() {
+    double avgOrder = 0.0, avgReceive = 0.0;
+    for (auto time : orderTimes) avgOrder += time;
+    for (auto time : receiveTimes) avgReceive += time;
+
+    avgOrder /= orderTimes.size();
+    avgReceive /= receiveTimes.size();
+
+    double sdOrder = 0.0, sdReceive = 0.0;
+    for (auto time : orderTimes) sdOrder += pow(time - avgOrder, 2);
+    for (auto time : receiveTimes) sdReceive += pow(time - avgReceive, 2);
+
+    sdOrder = sqrt(sdOrder / orderTimes.size());
+    sdReceive = sqrt(sdReceive / receiveTimes.size());
+
+    cout << "Average order processing time: " << avgOrder << " ms\n";
+    cout << "Standard deviation of order processing time: " << sdOrder << " ms\n";
+    cout << "Average receive processing time: " << avgReceive << " ms\n";
+    cout << "Standard deviation of receive processing time: " << sdReceive << " ms\n";
+}
+
+
 int main() {
     int numBakers;
     cin >> numBakers;

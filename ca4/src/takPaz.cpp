@@ -40,3 +40,42 @@ void oven() {
         cvBaker.notify_one();
     }
 }
+
+
+void baker() {
+    while (bakeryOpen) {
+        unique_lock<mutex> lock(queueMutex);
+        cvBaker.wait(lock, [] { return !customerQueue.empty() || !bakeryOpen; });
+        if (!bakeryOpen) break;
+
+        auto [customerName, orderSize] = customerQueue.front();
+        customerQueue.erase(customerQueue.begin());
+        lock.unlock();
+
+        auto startBakeTime = chrono::steady_clock::now();
+        cout << "Baker: Processing order for " << customerName << " (" << orderSize << " breads)\n";
+
+        while (orderSize > 0) {
+            int bakeSize = min(orderSize, OVEN_CAPACITY);
+            {
+                unique_lock<mutex> ovenLock(sharedSpaceMutex);
+                ovenReady = false;
+                cvOven.notify_one();
+                cvBaker.wait(ovenLock, [] { return ovenReady; });
+            }
+            {
+                lock_guard<mutex> spaceLock(sharedSpaceMutex);
+                sharedSpace[customerName] += bakeSize;
+            }
+            orderSize -= bakeSize;
+            cout << "Baker: Baked " << bakeSize << " breads for " << customerName << "\n";
+        }
+
+        auto endBakeTime = chrono::steady_clock::now();
+        orderTimes.push_back(chrono::duration_cast<chrono::milliseconds>(endBakeTime - startBakeTime).count());
+        cvCustomer.notify_all();
+        unique_lock<mutex> spaceLock(sharedSpaceMutex);
+        cvBaker.wait(spaceLock, [&customerName] { return sharedSpace[customerName] == 0; });
+        cout << "Baker: Order for " << customerName << " is complete.\n";
+    }
+}

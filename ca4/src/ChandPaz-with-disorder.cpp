@@ -29,3 +29,25 @@ int ovenCurrentCapacity = 0;
 // Forward declarations
 void getInput(int numBakers);
 void calculateAndPrintMetrics();
+
+void baker(int id) {
+    while (bakeryOpen) {
+        unique_lock<mutex> queueLock(ovenMutex);
+
+        cvOven.wait(queueLock, [] { return ovenCurrentCapacity < OVEN_CAPACITY || !bakeryOpen; });
+        if (!bakeryOpen) break;
+
+        // Simulate baking process
+        int bakeSize = min(10, OVEN_CAPACITY - ovenCurrentCapacity);
+        ovenCurrentCapacity += bakeSize;
+
+        queueLock.unlock();
+        this_thread::sleep_for(chrono::milliseconds(BAKING_TIME));
+
+        // Update shared space
+        lock_guard<mutex> spaceLock(sharedSpaceMutex);
+        ovenCurrentCapacity -= bakeSize;
+
+        cvOven.notify_all();
+    }
+}

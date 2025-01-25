@@ -51,3 +51,25 @@ void baker(int id) {
         cvOven.notify_all();
     }
 }
+
+void customer(const string &name, int orderSize, int bakerId) {
+    auto startReceiveTime = chrono::steady_clock::now();
+
+    unique_lock<mutex> lock(sharedSpaceMutex);
+    sharedSpace[name] += orderSize;
+
+    cout << "Customer " << name << " placed an order for " << orderSize << " breads.\n";
+
+    while (orderSize > 0) {
+        cvOven.wait(lock, [&] { return sharedSpace[name] > 0; });
+
+        int pickedUp = min(orderSize, sharedSpace[name]);
+        orderSize -= pickedUp;
+        sharedSpace[name] -= pickedUp;
+
+        cout << "Customer " << name << " picked up " << pickedUp << " breads.\n";
+    }
+
+    auto endReceiveTime = chrono::steady_clock::now();
+    cout << "Customer " << name << " has received all breads.\n";
+}

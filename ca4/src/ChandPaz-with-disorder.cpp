@@ -73,3 +73,25 @@ void customer(const string &name, int orderSize, int bakerId) {
     auto endReceiveTime = chrono::steady_clock::now();
     cout << "Customer " << name << " has received all breads.\n";
 }
+
+void calculateAndPrintMetrics(vector<int> orderTimes, vector<int> receiveTimes) {
+    double avgOrder = 0.0, avgReceive = 0.0;
+
+    for (int time : orderTimes) avgOrder += time;
+    for (int time : receiveTimes) avgReceive += time;
+
+    avgOrder /= orderTimes.size();
+    avgReceive /= receiveTimes.size();
+
+    double sdOrder = 0.0, sdReceive = 0.0;
+    for (int time : orderTimes) sdOrder += pow(time - avgOrder, 2);
+    for (int time : receiveTimes) sdReceive += pow(time - avgReceive, 2);
+
+    sdOrder = sqrt(sdOrder / orderTimes.size());
+    sdReceive = sqrt(sdReceive / receiveTimes.size());
+
+    cout << "Average order time: " << avgOrder << " ms\n";
+    cout << "Order time standard deviation: " << sdOrder << " ms\n";
+    cout << "Average receive time: " << avgReceive << " ms\n";
+    cout << "Receive time standard deviation: " << sdReceive << " ms\n";
+}

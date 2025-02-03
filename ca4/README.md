@@ -165,3 +165,79 @@ The `chandpaz.cpp` program is a modified version of `takpaz.cpp`, designed to ha
 ## **Conclusion**
 While `chandpaz.cpp` follows the same bakery system structure as `takpaz.cpp`, it introduces optimizations in order processing and pickup timing, making it more efficient in handling multiple customers concurrently.
 
+---
+---
+
+# Report on `chandPaz-with-disorder.cpp`
+
+## Overview
+The `chandPaz-with-disorder.cpp` program simulates a bakery system with multiple bakers and customers, where customers place orders, bakers process them, and an oven is used to bake bread. The implementation uses **multi-threading**, **mutex locks**, and **condition variables** for synchronization, ensuring efficient resource handling. Unlike `chandpaz.cpp`, this implementation introduces **disordered processing**, where orders are not necessarily handled in a strict FIFO manner.
+
+---
+
+## Algorithm Breakdown
+
+### 1. **Global Variables and Constants**
+- `OVEN_CAPACITY`: Set dynamically based on the number of bakers.
+- `BAKING_TIME = 2000ms`: Time required for a baking cycle.
+- `bakerQueues`: Stores the queue of orders for each baker.
+- `customerQueues`: Stores the customer orders assigned to bakers.
+- `sharedSpace`: Tracks the number of breads available for each customer.
+- `ovenMutex`, `sharedSpaceMutex`: Mutexes for synchronized access to shared resources.
+- `cvOven`: Condition variable to manage oven availability.
+- `bakeryOpen`: Flag indicating if the bakery is operational.
+- `ovenReady`: Flag determining oven availability.
+- `ovenCurrentCapacity`: Tracks the current load of the oven.
+
+---
+
+### 2. **Baker Function (`baker`)**
+- Each baker thread waits for available oven capacity.
+- Locks the oven mutex and waits on `cvOven` to ensure oven is not overloaded.
+- Determines the batch size based on available capacity.
+- Sleeps for `BAKING_TIME` to simulate baking.
+- Updates `sharedSpace` with completed orders and notifies waiting customers.
+
+#### **Difference from `chandpaz.cpp`**:
+- `chandPaz-with-disorder.cpp` does not process orders strictly in sequence.
+- `ovenCurrentCapacity` is dynamically adjusted instead of processing full batches sequentially.
+
+---
+
+### 3. **Customer Function (`customer`)**
+- Customers place orders and wait until bread is available.
+- Uses `cvOven.wait()` to ensure synchronization with baking.
+- Picks up available bread batch by batch.
+- Logs order completion time.
+
+#### **Difference from `chandpaz.cpp`**:
+- `chandpaz.cpp` customers wait for complete orders, while `chandPaz-with-disorder.cpp` allows partial pickups.
+- Synchronization between customers and bakers is more dynamic, allowing overlap.
+
+---
+
+### 4. **Performance Metrics Calculation (`calculateAndPrintMetrics`)**
+- Computes the **average** and **standard deviation** of:
+  - Order processing time.
+  - Bread receiving time.
+- Prints these statistics for evaluation.
+
+---
+
+## **Key Differences from `chandpaz.cpp`**
+
+| Feature | `chandpaz.cpp` | `chandPaz-with-disorder.cpp` |
+|---------|---------------|----------------------------|
+| **Order Processing** | Strict FIFO order handling | Disordered processing (more flexible) |
+| **Baker Handling** | Bakers work in a fixed queue | Bakers process orders dynamically |
+| **Oven Usage** | Fully filled batches | Flexible batch sizes |
+| **Customer Pickup** | Customers receive full orders | Customers pick up partial orders |
+| **Synchronization** | More structured | More flexible and dynamic |
+
+---
+
+## **Conclusion**
+The `chandPaz-with-disorder.cpp` program introduces a more dynamic and flexible approach to order processing compared to `chandpaz.cpp`. Instead of enforcing a strict sequential order, it allows overlapping operations where customers can pick up bread in portions, and bakers adjust batch sizes dynamically. This approach optimizes oven usage but may introduce variability in order completion times.
+
+While `chandpaz.cpp` ensures orderly execution, `chandPaz-with-disorder.cpp` prioritizes efficiency, reducing idle time for the bakers and oven. The choice between these two implementations depends on whether maintaining strict order or maximizing throughput is the priority.
+

@@ -78,7 +78,90 @@ The `takpaz.cpp` program simulates a bakery system where multiple customers plac
   - `cvCustomer`: Ensures customers pick up bread only when available.
 
 ---
+---
 
 ## **Conclusion**
 The `takpaz.cpp` program effectively utilizes multi-threading to manage a bakery system. The implementation ensures efficient order processing, synchronized baking, and fair resource distribution among multiple customers. Additionally, it collects performance metrics for evaluation.
+
+# Report on `chandpaz.cpp`
+
+## Overview
+The `chandpaz.cpp` program is a modified version of `takpaz.cpp`, designed to handle a bakery system where multiple customers place orders, a baker processes these orders, and an oven bakes the bread. While similar in structure to `takpaz.cpp`, `chandpaz.cpp` introduces differences in algorithmic execution and synchronization mechanisms.
+
+---
+
+## Algorithm Breakdown
+
+### 1. **Global Variables and Constants**
+- `OVEN_CAPACITY = 10`: Maximum number of breads baked at once.
+- `BAKING_TIME = 2000ms`: Time required to bake a batch.
+- `customerQueue`: Stores customer names and order sizes.
+- `sharedSpace`: Tracks baked bread available for customers.
+- `queueMutex`, `sharedSpaceMutex`: Mutexes for thread safety.
+- `cvBaker`, `cvOven`, `cvCustomer`: Condition variables for synchronization.
+- `bakeryOpen`: Flag for bakery status.
+- `ovenReady`: Flag for oven availability.
+- `orderTimes`, `receiveTimes`: Vectors tracking performance metrics.
+
+---
+
+### 2. **Oven Function (`oven`)**
+- Waits for the baker to initiate baking.
+- Sleeps for `BAKING_TIME` to simulate baking.
+- Notifies the baker when baking is complete.
+- Continues until bakery closure.
+
+---
+
+### 3. **Baker Function (`baker`)**
+- Extracts orders from `customerQueue`.
+- Processes orders in batches up to `OVEN_CAPACITY`.
+- Uses `cvOven` to coordinate baking.
+- Moves baked bread to `sharedSpace`.
+- Records processing times.
+
+---
+
+### 4. **Customer Function (`customer`)**
+- Waits for bread in `sharedSpace`.
+- Collects bread batch by batch.
+- Updates `sharedSpace` and notifies baker.
+- Records order fulfillment time.
+
+---
+
+### 5. **Input Handling (`getInput`)**
+- Reads customer data and stores it in `customerQueue`.
+
+---
+
+### 6. **Performance Metrics (`calculateAndPrintMetrics`)**
+- Computes average and standard deviation of:
+  - Order processing time.
+  - Order pickup time.
+- Displays performance results.
+
+---
+
+## **Key Differences Between `takpaz.cpp` and `chandpaz.cpp`**
+| Feature | `takpaz.cpp` | `chandpaz.cpp` |
+|---------|-------------|-------------|
+| **Baking Process** | Bakes continuously as orders arrive | May group multiple orders before baking |
+| **Thread Coordination** | Customers pick up bread individually | Customers may collect in synchronized batches |
+| **Synchronization Approach** | Uses strict condition variable checks | May allow flexible pickup timing |
+| **Efficiency Consideration** | Processes each order as soon as possible | Optimizes batch processing to reduce wait times |
+
+---
+
+## **Concurrency and Synchronization**
+- **Mutexes (`queueMutex`, `sharedSpaceMutex`)**: Protect shared resources.
+- **Condition Variables (`cvBaker`, `cvOven`, `cvCustomer`)**:
+  - `cvBaker`: Ensures baker works only when needed.
+  - `cvOven`: Synchronizes oven baking cycles.
+  - `cvCustomer`: Controls customer order collection.
+
+---
+
+## **Conclusion**
+While `chandpaz.cpp` follows the same bakery system structure as `takpaz.cpp`, it introduces optimizations in order processing and pickup timing, making it more efficient in handling multiple customers concurrently.
 

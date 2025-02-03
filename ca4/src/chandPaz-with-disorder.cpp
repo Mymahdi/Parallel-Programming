@@ -10,7 +10,6 @@
 
 using namespace std;
 
-// Constants and global variables
 int OVEN_CAPACITY;
 const int BAKING_TIME = 2000;
 
@@ -26,7 +25,6 @@ bool bakeryOpen = true;
 bool ovenReady = true;
 int ovenCurrentCapacity = 0;
 
-// Forward declarations
 void getInput(int numBakers);
 void calculateAndPrintMetrics();
 
@@ -37,14 +35,12 @@ void baker(int id) {
         cvOven.wait(queueLock, [] { return ovenCurrentCapacity < OVEN_CAPACITY || !bakeryOpen; });
         if (!bakeryOpen) break;
 
-        // Simulate baking process
         int bakeSize = min(10, OVEN_CAPACITY - ovenCurrentCapacity);
         ovenCurrentCapacity += bakeSize;
 
         queueLock.unlock();
         this_thread::sleep_for(chrono::milliseconds(BAKING_TIME));
 
-        // Update shared space
         lock_guard<mutex> spaceLock(sharedSpaceMutex);
         ovenCurrentCapacity -= bakeSize;
 
@@ -104,22 +100,18 @@ int main() {
     vector<thread> bakerThreads;
     vector<thread> customerThreads;
 
-    // Get input
     getInput(numBakers);
 
-    // Start baker threads
     for (int i = 0; i < numBakers; ++i) {
         bakerThreads.emplace_back(baker, i);
     }
 
-    // Start customer threads
     for (int i = 0; i < customerQueues.size(); ++i) {
         for (auto &[name, orderSize] : customerQueues[i]) {
             customerThreads.emplace_back(customer, name, orderSize, i);
         }
     }
 
-    // Join threads
     for (auto &t : customerThreads) {
         if (t.joinable()) t.join();
     }
